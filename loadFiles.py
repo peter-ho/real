@@ -4,6 +4,7 @@ import os
 import gzip
 import logging
 import logging.config
+import logging.handlers
 import sys
 #fp = requests.get('http://propaccess.traviscad.org/clientdb/?cid=1')
 #cookie = fp.headers['set-cookie'].split(';')[0]
@@ -31,7 +32,7 @@ class County(object):
         #for chunk in resp.iter_content(10000):
         #  file.write(chunk)
         with gzip.open(os.path.join(self.name, pid+'.gz'), 'wb') as f:
-          f.write(self.patt.sub(' ', resp.text))
+          f.write(self.patt.sub(' ', resp.content))
       else:
         self.log.warn('%0s - invalid response for prop id %1s' % (self.name, pid))
       resp.close()
@@ -44,7 +45,7 @@ class CountyTravis(County):
   def formatUrl(self, pid):
     return 'http://propaccess.traviscad.org/clientdb/Property.aspx?prop_id=%0s' % pid
   def isValidResponse(self, resp):
-    return super(CountyTravis,self).isValidResponse(resp) and resp.text.find('Property not found.') == -1
+    return super(CountyTravis,self).isValidResponse(resp) and resp.content.find('Property not found.') == -1
 
 class CountyWilliamson(County):
   def __init__(self, session, log):
@@ -52,7 +53,7 @@ class CountyWilliamson(County):
   def formatUrl(self, pid):
     return 'http://search.wcad.org/Property-Detail?PropertyQuickRefID=R%0s' % pid
   def isValidResponse(self, resp):
-    return super(CountyWilliamson,self).isValidResponse(resp) and resp.text.find(' could not be loaded.') == -1
+    return super(CountyWilliamson,self).isValidResponse(resp) and resp.content.find(' could not be loaded.') == -1
 
 def getProps(ids):
   logger.info('get prop ids: %0s' % ids)
@@ -69,16 +70,21 @@ def loadFiles(dir, batchCount):
   batchIds = []
   idx = 0
   for filename in filenames:
-    logger.info('parsing file: %0s' % filename)
-    with open(os.path.join(dir, filename), 'r') as fi:
+    if filename.endswith('cmp'):
+      continue
+    filePath = os.path.join(dir, filename)
+    logger.info('parsing file: %0s' % filePath)
+    with open(filePath, 'r') as fi:
       for line in fi:
         batchIds.append(line[:-1])
         idx += 1
         if idx == batchCount:
           getProps(batchIds)
-          del batchList[:]
+          del batchIds[:]
+          idx = 0
       if len(batchIds) > 0:
         getProps(batchIds)
+    os.rename(filePath, filePath + '.cmp')
 
 logging.config.fileConfig('log/logging.conf')
 logger = logging.getLogger('default')
