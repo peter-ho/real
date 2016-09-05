@@ -27,14 +27,14 @@ class County(object):
     for pid in pids:
       resp = self.sess.get(self.formatUrl(pid))
       if self.isValidResponse(resp):
-        self.log.info('%0s - valid response for prop id %1s' % (self.name, pid))
+        self.log.info('%0s - prop id %1s' % (self.name, pid))
         #file = open(os.path.join(self.name, pid), 'wb')
         #for chunk in resp.iter_content(10000):
         #  file.write(chunk)
         with gzip.open(os.path.join(self.name, pid+'.gz'), 'wb') as f:
           f.write(self.patt.sub(' ', resp.content))
       else:
-        self.log.warn('%0s - invalid response for prop id %1s' % (self.name, pid))
+        self.log.warn('%0s - invalid prop id %1s' % (self.name, pid))
       resp.close()
 
 class CountyTravis(County):
@@ -84,13 +84,17 @@ def loadFiles(dir, batchCount):
           idx = 0
       if len(batchIds) > 0:
         getProps(batchIds)
-    os.rename(filePath, filePath + '.cmp')
+    os.rename(filePath, os.path.join(os.path.join(dir, 'cmp'), filename))
 
 logging.config.fileConfig('log/logging.conf')
 logger = logging.getLogger('default')
 ## python loadFiles.py temp 10
 if __name__ == '__main__':
-  dir = sys.argv[1]
-  batchCount = sys.argv[2]
-  logger.info('loadFiles execution starts: %0s %1s' % (dir, batchCount)) 
-  loadFiles(dir, int(batchCount))
+  try:
+    dir = sys.argv[1]
+    batchCount = sys.argv[2]
+    logger.info('loadFiles execution starts: %0s %1s' % (dir, batchCount)) 
+    loadFiles(dir, int(batchCount))
+  except:
+    logger.error('error when running: %0s %1s\t%2s' % (sys.argv[1], sys.argv[2], str(sys.exc_info())))
+
