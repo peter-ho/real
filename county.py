@@ -1,16 +1,11 @@
 import requests
-#import re
+import re
 import os
-#import gzip
+import gzip
 import logging
 import logging.config
 import logging.handlers
-import sys
-import county
-import random
-import traceback
-#fp = requests.get('http://propaccess.traviscad.org/clientdb/?cid=1')
-'''
+
 class County(object):
   def __init__(self, session, name, logger):
     self.sess = session
@@ -56,54 +51,3 @@ class CountyWilliamson(County):
     return 'http://search.wcad.org/Property-Detail?PropertyQuickRefID=R%0s' % pid
   def isValidResponse(self, resp):
     return super(CountyWilliamson,self).isValidResponse(resp) and resp.content.find(' could not be loaded.') == -1
-'''
-def getProps(ids):
-  logger.info('get prop ids: %0s' % ids)
-  s = requests.Session()
-  cs = [county.CountyTravis(s, logger), county.CountyWilliamson(s, logger)]
-  for c in cs:
-    #c.getProp(['41', '571461', '822241', '524832', '002209'])
-    c.getProp(ids)
-  s.close()
-
-## python loadFiles.py 
-def loadFiles(dir, minBatchCount, maxBatchCount):
-  filenames = os.listdir(dir)
-  batchIds = []
-  for filename in filenames:
-    if filename.endswith('cmp'):
-      continue
-    filePath = os.path.join(dir, filename)
-    logger.info('parsing file: %0s' % filePath)
-    batchCount = random.randrange(minBatchCount, maxBatchCount)
-    idx = 0
-    with open(filePath, 'r') as fi:
-      for line in fi:
-        batchIds.append(line[:-1])
-        idx += 1
-        if idx == batchCount:
-          getProps(batchIds)
-          del batchIds[:]
-          idx = 0
-          batchCount = random.randrange(minBatchCount, maxBatchCount)
-      if len(batchIds) > 0:
-        getProps(batchIds)
-    os.rename(filePath, os.path.join(os.path.join(dir, 'cmp'), filename))
-
-logging.config.fileConfig('log/logging.conf')
-logger = logging.getLogger('loadFiles')
-## python loadFiles.py temp 10
-if __name__ == '__main__':
-  try:
-    dir = sys.argv[1]
-    minBatchCount = sys.argv[2]
-    maxBatchCount = sys.argv[3]
-    logger.info('loadFiles execution starts: %0s %1s %2s' % (dir, minBatchCount, maxBatchCount)) 
-    loadFiles(dir, int(minBatchCount), int(maxBatchCount))
-  except Exception, err:
-    exc_info = sys.exc_info()
-    logger.error('error when running: %0s %1s %2s\t%3s' % (sys.argv[1], sys.argv[2], sys.argv[3], str(exc_info)))
-  finally:
-    traceback.print_exception(*exc_info)
-    del exc_info
-
