@@ -92,7 +92,7 @@ def loadFiles(dir, minBatchCount, maxBatchCount):
 
 logging.config.fileConfig('log/logging.conf')
 logger = logging.getLogger('loadFiles')
-## python loadFiles.py temp 10
+## python loadFiles.py temp 3 10
 if __name__ == '__main__':
   try:
     dir = sys.argv[1]
@@ -103,7 +103,6 @@ if __name__ == '__main__':
   except Exception, err:
     exc_info = sys.exc_info()
     logger.error('error when running: %0s %1s %2s\t%3s' % (sys.argv[1], sys.argv[2], sys.argv[3], str(exc_info)))
-  finally:
     traceback.print_exception(*exc_info)
     del exc_info
 
